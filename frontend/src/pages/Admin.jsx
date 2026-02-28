@@ -76,7 +76,8 @@ const Admin = () => {
             fetchServices();
 
             // Setup Socket.io
-            const socket = io('http://localhost:5000');
+            const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const socket = io(socketUrl);
 
             socket.on('new_booking', (data) => {
                 console.log('New Booking Alert:', data);
