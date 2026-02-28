@@ -1,0 +1,19 @@
+.reviews-page-container {
+    padding-top: 120px;
+    min-height: 100vh;
+    background-color: var(--color-cream);
+}
+
+.reviews-page-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.reviews-page-header h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+.reviews-page-header p {
+    color: var(--color-charcoal-light);
+    font-size: 1.1rem;
+}

@@ -1,0 +1,148 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 20px 0;
+    transition: all 0.4s var(--ease-smooth);
+    background: transparent;
+}
+
+.navbar.scrolled {
+    padding: 12px 0;
+    border-radius: 0;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    color: var(--color-gold);
+    width: 32px;
+    height: 32px;
+}
+
+.brand-text h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: var(--color-charcoal);
+}
+
+.navbar.scrolled .brand-text h1 {
+    color: var(--color-charcoal);
+}
+
+.brand-text span {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: var(--color-charcoal-light);
+    display: block;
+    margin-top: -4px;
+}
+
+.desktop-nav {
+    display: none;
+    gap: 30px;
+}
+
+.nav-link {
+    font-family: var(--font-secondary);
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: var(--color-gold);
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 100%;
+}
+
+.mobile-toggle {
+    display: block;
+    background: none;
+    border: none;
+    color: var(--color-charcoal);
+    cursor: pointer;
+}
+
+.mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 5%;
+    right: 5%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.mobile-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mobile-menu nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.mobile-link {
+    font-family: var(--font-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.custom-btn-mobile {
+    margin-top: 10px;
+}
+
+.desktop-actions {
+    display: none;
+}
+
+@media (min-width: 900px) {
+
+    .desktop-nav,
+    .desktop-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .mobile-toggle,
+    .mobile-menu {
+        display: none;
+    }
+}

@@ -1,0 +1,148 @@
+.reviews-carousel-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 5%;
+}
+
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.reviews-header h2 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin: 0;
+}
+
+.reviews-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.control-btn {
+    background: white;
+    border: 1px solid var(--color-beige);
+    color: var(--color-charcoal);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: var(--color-gold);
+    color: white;
+    border-color: var(--color-gold);
+}
+
+.reviews-slider {
+    overflow: hidden;
+    padding: 20px 0;
+}
+
+.reviews-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+
+@media (min-width: 768px) {
+    .reviews-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .reviews-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.review-card {
+    padding: 30px;
+    background: white;
+    position: relative;
+}
+
+.review-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.reviewer-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reviewer-name {
+    margin: 0 0 2px;
+    font-size: 1.1rem;
+}
+
+.review-date {
+    font-size: 0.8rem;
+    color: var(--color-charcoal-light);
+}
+
+.review-stars {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 2px;
+}
+
+.review-text {
+    font-size: 1rem;
+    color: var(--color-charcoal-light);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.google-watermark {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-family: 'Product Sans', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: rgba(66, 133, 244, 0.1);
+    user-select: none;
+}
+
+.pagination-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-beige);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.dot.active {
+    background: var(--color-gold);
+    transform: scale(1.3);
+}
+
+.reviews-loading {
+    text-align: center;
+    padding: 60px;
+    font-size: 1.2rem;
+    color: var(--color-charcoal-light);
+}
