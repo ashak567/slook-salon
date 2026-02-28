@@ -38,14 +38,16 @@
 }
 
 .booking-info p {
-    color: var(--color-beige);
+    color: var(--color-cream);
     margin-bottom: 40px;
     line-height: 1.6;
+    font-size: 1.05rem;
 }
 
 .contact-details p {
     margin-bottom: 15px;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    color: white;
 }
 
 .contact-details strong {
