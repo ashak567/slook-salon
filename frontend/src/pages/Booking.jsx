@@ -138,7 +138,7 @@ const Booking = () => {
         <div className="booking-page">
             <div className="booking-container">
 
-                <div className="booking-info glass-panel">
+                <div className="booking-info">
                     <h2>Book Your <br />Appointment</h2>
                     <p>Schedule your session at Slooks Unisex Salon. Please note that an appointment requires a strict arrival time.</p>
                     <div className="contact-details">

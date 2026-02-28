@@ -28,6 +28,8 @@
     color: var(--color-cream);
     padding: 50px 40px;
     border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
 
 .booking-info h2 {
