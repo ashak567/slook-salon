@@ -54,6 +54,8 @@ router.post('/', (req, res) => {
     });
 });
 
+// -- NO OP --
+
 // Update appointment status or payment
 router.put('/:id', authMiddleware, adminMiddleware, (req, res) => {
     const { paymentStatus, paymentId } = req.body;

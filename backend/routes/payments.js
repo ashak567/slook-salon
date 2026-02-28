@@ -14,7 +14,7 @@ router.post('/create-order', async (req, res) => {
     try {
         const { amount, appointmentId } = req.body; // Amount should be in INR
 
-        if (process.env.RAZORPAY_KEY_ID === 'test_key_id') {
+        if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'test_key_id' || process.env.RAZORPAY_KEY_ID === '') {
             return res.json({
                 id: 'order_mock_' + Date.now(),
                 amount: amount * 100,
@@ -43,7 +43,8 @@ router.post('/create-order', async (req, res) => {
 router.post('/verify-payment', (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
 
-    if (process.env.RAZORPAY_KEY_ID === 'test_key_id' && razorpay_signature === 'mock_signature') {
+    // Test mode bypass
+    if ((!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'test_key_id' || process.env.RAZORPAY_KEY_ID === '') && razorpay_signature === 'mock_signature') {
         db.run(`UPDATE appointments SET paymentStatus = 'Paid', paymentId = ? WHERE id = ?`,
             [razorpay_payment_id, appointmentId],
             function (err) {
