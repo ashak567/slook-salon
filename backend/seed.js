@@ -1,4 +1,4 @@
-const db = require('./db');
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 
 const services = [
@@ -125,34 +125,52 @@ const services = [
     { name: 'Laser Hair Removal', cat: 'Unisex', sub: 'Premium Add-ons', desc: 'Per session laser hair reduction', pMin: 2500, pMax: 5000, dur: 60 },
 ];
 
-function seed() {
-    db.serialize(() => {
-        db.get('SELECT count(*) as count FROM services', (err, row) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            if (row.count === 0) {
-                const stmt = db.prepare(`INSERT INTO services (serviceName, category, subCategory, description, priceMin, priceMax, duration) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-                services.forEach(s => {
-                    stmt.run(s.name, s.cat, s.sub, s.desc, s.pMin, s.pMax, s.dur);
-                });
-                stmt.finalize();
-                console.log('Seeded services table.');
-            } else {
-                console.log('Services table already seeded.');
-            }
-        });
+const mongoose = require('mongoose');
+const Service = require('./models/Service');
+const Staff = require('./models/Staff');
+
+async function seed() {
+    try {
+        const MONGODB_URI = process.env.MONGODB_URI;
+        if (!MONGODB_URI) {
+            console.error('Skipping seed: No MONGODB_URI found.');
+            return;
+        }
+
+        // We assume server.js establishes connections in real app, but seed.js might run standalone
+        if (mongoose.connection.readyState !== 1) {
+            await mongoose.connect(MONGODB_URI);
+        }
+
+        // Seed Services
+        const serviceCount = await Service.countDocuments();
+        if (serviceCount === 0) {
+            const formattedServices = services.map(s => ({
+                serviceName: s.name,
+                category: s.cat,
+                subCategory: s.sub,
+                description: s.desc,
+                priceMin: s.pMin,
+                priceMax: s.pMax,
+                duration: s.dur
+            }));
+            await Service.insertMany(formattedServices);
+            console.log('Seeded services collection.');
+        } else {
+            console.log('Services collection already seeded.');
+        }
 
         // Seed default admin user (Owner)
-        db.get('SELECT count(*) as count FROM staff', (err, row) => {
-            if (row.count === 0) {
-                const hash = bcrypt.hashSync('slooks123!', 10);
-                db.run(`INSERT INTO staff (username, password, role) VALUES (?, ?, ?)`, ['owner', hash, 'admin']);
-                console.log('Seeded default owner info (owner / slooks123!)');
-            }
-        });
-    });
+        const staffCount = await Staff.countDocuments();
+        if (staffCount === 0) {
+            const hash = bcrypt.hashSync('slooks123!', 10);
+            await Staff.create({ username: 'owner', password: hash, role: 'admin' });
+            console.log('Seeded default owner info (owner / slooks123!)');
+        }
+
+    } catch (err) {
+        console.error('Error during seeding:', err);
+    }
 }
 
 // Run seed right after initialization

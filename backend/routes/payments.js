@@ -45,13 +45,9 @@ router.post('/verify-payment', (req, res) => {
 
     // Test mode bypass
     if ((!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'test_key_id' || process.env.RAZORPAY_KEY_ID === '') && razorpay_signature === 'mock_signature') {
-        db.run(`UPDATE appointments SET paymentStatus = 'Paid', paymentId = ? WHERE id = ?`,
-            [razorpay_payment_id, appointmentId],
-            function (err) {
-                if (err) return res.status(500).json({ status: 'failed', error: err.message });
-                return res.json({ status: 'success', message: 'Mock Payment verified successfully' });
-            }
-        );
+        Appointment.findByIdAndUpdate(appointmentId, { paymentStatus: 'Paid', paymentId: razorpay_payment_id }, { new: true })
+            .then(() => res.json({ status: 'success', message: 'Mock Payment verified successfully' }))
+            .catch(err => res.status(500).json({ status: 'failed', error: err.message }));
         return;
     }
 
@@ -63,13 +59,9 @@ router.post('/verify-payment', (req, res) => {
 
     if (expectedSignature === razorpay_signature) {
         // Payment is authentic, update appointment
-        db.run(`UPDATE appointments SET paymentStatus = 'Paid', paymentId = ? WHERE id = ?`,
-            [razorpay_payment_id, appointmentId],
-            function (err) {
-                if (err) return res.status(500).json({ status: 'failed', error: err.message });
-                res.json({ status: 'success', message: 'Payment verified successfully' });
-            }
-        );
+        Appointment.findByIdAndUpdate(appointmentId, { paymentStatus: 'Paid', paymentId: razorpay_payment_id }, { new: true })
+            .then(() => res.json({ status: 'success', message: 'Payment verified successfully' }))
+            .catch(err => res.status(500).json({ status: 'failed', error: err.message }));
     } else {
         res.status(400).json({ status: 'failed', message: 'Invalid payment signature' });
     }

@@ -6,11 +6,25 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const { Server } = require('socket.io');
-
-const db = require('./db');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
+
+// Connect to MongoDB Atlas
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.error('FATAL ERROR: MONGODB_URI is not defined in .env');
+    process.exit(1);
+}
+
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Successfully connected to MongoDB Atlas'))
+    .catch((err) => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
+
 const io = new Server(server, {
     cors: {
         origin: '*',

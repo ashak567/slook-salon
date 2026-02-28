@@ -1,4 +1,6 @@
-const db = require('./db');
+require('dotenv').config();
+const mongoose = require('mongoose');
+const Review = require('./models/Review');
 const crypto = require('crypto');
 
 const names = [
@@ -59,25 +61,34 @@ function generateReviews(count) {
     return reviews;
 }
 
-const dbReviews = generateReviews(90);
+async function runSeed() {
+    try {
+        const MONGODB_URI = process.env.MONGODB_URI;
+        if (!MONGODB_URI) {
+            console.error('Skipping reviews seed: No MONGODB_URI found.');
+            return;
+        }
 
-db.serialize(() => {
-    db.run("DELETE FROM reviews", (err) => {
-        if (err) return console.error(err);
+        if (mongoose.connection.readyState !== 1) {
+            await mongoose.connect(MONGODB_URI);
+            console.log('Connected to MongoDB Atlas for Review Seeding');
+        }
+
+        const dbReviews = generateReviews(90);
+
+        // Delete existing reviews
+        await Review.deleteMany({});
         console.log("Cleared existing reviews.");
 
-        const stmt = db.prepare(`INSERT INTO reviews (reviewerName, rating, reviewText, reviewDate, profilePhotoUrl) VALUES (?, ?, ?, ?, ?)`);
-        let count = 0;
+        // Insert new reviews
+        const inserted = await Review.insertMany(dbReviews);
+        console.log(`Successfully seeded ${inserted.length} Google reviews into the database.`);
 
-        dbReviews.forEach(r => {
-            stmt.run(r.reviewerName, r.rating, r.reviewText, r.reviewDate, r.profilePhotoUrl, (err) => {
-                if (!err) count++;
-            });
-        });
+        process.exit(0);
+    } catch (err) {
+        console.error('Failed to seed reviews:', err);
+        process.exit(1);
+    }
+}
 
-        stmt.finalize(() => {
-            console.log(`Successfully seeded ${count} Google reviews into the database.`);
-            db.close();
-        });
-    });
-});
+runSeed();

@@ -1,60 +1,54 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const Service = require('../models/Service');
+
+// Helper to map Mongoose _id to id for frontend compatibility
+const mapServiceId = (s) => {
+    const obj = s.toObject();
+    obj.id = obj._id;
+    return obj;
+};
 
 // Get all services
-router.get('/', (req, res) => {
-    db.all('SELECT * FROM services', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+router.get('/', async (req, res) => {
+    try {
+        const services = await Service.find();
+        res.json(services.map(mapServiceId));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Create new service (Admin only protected later via middleware)
-router.post('/', (req, res) => {
-    const { serviceName, category, subCategory, description, priceMin, priceMax, duration } = req.body;
-
-    if (!serviceName || !category || !priceMin || !duration) {
-        return res.status(400).json({ error: 'Missing required fields' });
+router.post('/', async (req, res) => {
+    try {
+        const newService = await Service.create(req.body);
+        res.status(201).json({ message: 'Service created', id: newService._id });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
-
-    const sql = `INSERT INTO services (serviceName, category, subCategory, description, priceMin, priceMax, duration) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    const params = [serviceName, category, subCategory, description, priceMin, priceMax, duration];
-
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ message: 'Service created', id: this.lastID });
-    });
 });
 
 // Update a service
-router.put('/:id', (req, res) => {
-    const { serviceName, category, subCategory, description, priceMin, priceMax, duration, activeStatus } = req.body;
-    const sql = `UPDATE services SET 
-    serviceName = coalesce(?, serviceName),
-    category = coalesce(?, category),
-    subCategory = coalesce(?, subCategory),
-    description = coalesce(?, description),
-    priceMin = coalesce(?, priceMin),
-    priceMax = coalesce(?, priceMax),
-    duration = coalesce(?, duration),
-    activeStatus = coalesce(?, activeStatus)
-    WHERE id = ?`;
-
-    const params = [serviceName, category, subCategory, description, priceMin, priceMax, duration, activeStatus, req.params.id];
-
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Service updated', changes: this.changes });
-    });
+router.put('/:id', async (req, res) => {
+    try {
+        const updated = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: 'Service not found' });
+        res.json({ message: 'Service updated', service: mapServiceId(updated) });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // Delete a service
-router.delete('/:id', (req, res) => {
-    db.run('DELETE FROM services WHERE id = ?', req.params.id, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Service deleted', changes: this.changes });
-    });
+router.delete('/:id', async (req, res) => {
+    try {
+        const deleted = await Service.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Service not found' });
+        res.json({ message: 'Service deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

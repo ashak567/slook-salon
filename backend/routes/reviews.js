@@ -1,39 +1,57 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const Review = require('../models/Review');
 const { authMiddleware, adminMiddleware } = require('../middlewares/authMiddleware');
 
+// Helper to map Mongoose _id to id
+const mapReviewId = (r) => {
+    const obj = r.toObject();
+    obj.id = obj._id;
+    return obj;
+};
+
 // Get all reviews (Public)
-router.get('/', (req, res) => {
-    db.all('SELECT * FROM reviews ORDER BY reviewDate DESC', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+router.get('/', async (req, res) => {
+    try {
+        const reviews = await Review.find().sort({ reviewDate: -1 });
+        res.json(reviews.map(mapReviewId));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Add a review (Public)
-router.post('/', (req, res) => {
-    const { reviewerName, rating, reviewText, reviewDate, profilePhotoUrl } = req.body;
+router.post('/', async (req, res) => {
+    try {
+        const { reviewerName, rating, reviewText, reviewDate, profilePhotoUrl } = req.body;
 
-    if (!reviewerName || !rating) {
-        return res.status(400).json({ error: 'Reviewer name and rating are required' });
+        if (!reviewerName || !rating) {
+            return res.status(400).json({ error: 'Reviewer name and rating are required' });
+        }
+
+        const newReview = await Review.create({
+            reviewerName,
+            rating,
+            reviewText,
+            reviewDate: reviewDate || new Date().toISOString(),
+            profilePhotoUrl
+        });
+
+        res.status(201).json({ message: 'Review added', id: newReview._id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    const sql = `INSERT INTO reviews (reviewerName, rating, reviewText, reviewDate, profilePhotoUrl) VALUES (?, ?, ?, ?, ?)`;
-    const params = [reviewerName, rating, reviewText, reviewDate || new Date().toISOString(), profilePhotoUrl];
-
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ message: 'Review added', id: this.lastID });
-    });
 });
 
 // Delete a review (Admin only)
-router.delete('/:id', authMiddleware, adminMiddleware, (req, res) => {
-    db.run('DELETE FROM reviews WHERE id = ?', req.params.id, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Review deleted', changes: this.changes });
-    });
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const deleted = await Review.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Review not found' });
+        res.json({ message: 'Review deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
