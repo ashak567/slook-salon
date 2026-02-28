@@ -17,7 +17,9 @@ const Booking = () => {
         serviceId: initialServiceId,
         stylistName: '',
         date: '',
-        time: ''
+        time: '',
+        category: '',
+        paymentMethod: 'PayAtSalon'
     });
 
     const [loading, setLoading] = useState(false);
@@ -48,11 +50,57 @@ const Booking = () => {
         setSuccess('');
 
         try {
-            const res = await api.post('/appointments', formData);
-            setSuccess('Appointment booked successfully! We will see you soon.');
-            setTimeout(() => {
-                navigate('/');
-            }, 3000);
+            const selectedService = services.find(s => s.id === Number(formData.serviceId));
+            const totalAmount = selectedService ? selectedService.priceMin : 0;
+            const payload = { ...formData, totalAmount, paymentStatus: 'Pending' };
+
+            // Step 1: Create the appointment first
+            const res = await api.post('/appointments', payload);
+            const appointmentId = res.data.id;
+
+            if (formData.paymentMethod === 'PayAtSalon') {
+                setSuccess('Appointment booked successfully! We will see you soon.');
+                setTimeout(() => navigate('/'), 3000);
+            } else {
+                // Step 2: Pay Now Flow - Create Razorpay Order
+                const orderRes = await api.post('/payments/create-order', { amount: totalAmount, appointmentId });
+
+                const options = {
+                    key: "rzp_test_dummykey", // In production, fetch this dynamically or use env
+                    amount: orderRes.data.amount,
+                    currency: "INR",
+                    name: "Slooks Unisex Salon",
+                    description: `Booking for ${selectedService.serviceName}`,
+                    order_id: orderRes.data.id,
+                    handler: async function (response) {
+                        try {
+                            // Step 3: Verify Payment Signature Server-Side
+                            await api.post('/payments/verify-payment', {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                appointmentId
+                            });
+                            setSuccess('Payment successful & Appointment confirmed!');
+                            setTimeout(() => navigate('/'), 3000);
+                        } catch (err) {
+                            setError('Payment verification failed. Please contact salon.');
+                        }
+                    },
+                    prefill: {
+                        name: formData.customerName,
+                        email: formData.email,
+                        contact: formData.phone
+                    },
+                    theme: { color: "#D4AF37" }
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (response) {
+                    setError('Payment failed: ' + response.error.description);
+                });
+                rzp.open();
+            }
         } catch (err) {
             if (err.response && err.response.data && err.response.data.error) {
                 setError(err.response.data.error);
@@ -124,9 +172,9 @@ const Booking = () => {
                                     required
                                 >
                                     <option value="">-- Select Category --</option>
-                                    <option value="Male Services">Male Services</option>
-                                    <option value="Female Services">Female Services</option>
-                                    <option value="Unisex Services">Unisex Services</option>
+                                    <option value="Men">Male Services</option>
+                                    <option value="Women">Female Services</option>
+                                    <option value="Unisex">Unisex Services</option>
                                 </select>
                             </div>
 
@@ -136,7 +184,7 @@ const Booking = () => {
                                     <select name="serviceId" value={formData.serviceId} onChange={handleChange} required>
                                         <option value="">-- Choose a Service --</option>
                                         {services
-                                            .filter(s => s.genderCategory === formData.category)
+                                            .filter(s => s.category === formData.category)
                                             .map(s => (
                                                 <option key={s.id} value={s.id}>{s.serviceName} - ₹{s.priceMin}</option>
                                             ))
@@ -168,6 +216,20 @@ const Booking = () => {
                                             <option key={time} value={time}>{time}</option>
                                         ))}
                                     </select>
+                                </div>
+                            </div>
+
+                            <div className="form-group payment-options" style={{ marginTop: '20px', marginBottom: '20px' }}>
+                                <label style={{ color: 'var(--color-charcoal)', fontWeight: 'bold' }}>Payment Method *</label>
+                                <div className="radio-group" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--color-charcoal)' }}>
+                                        <input type="radio" name="paymentMethod" value="Online" checked={formData.paymentMethod === 'Online'} onChange={handleChange} />
+                                        Pay Now (Online)
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--color-charcoal)' }}>
+                                        <input type="radio" name="paymentMethod" value="PayAtSalon" checked={formData.paymentMethod === 'PayAtSalon'} onChange={handleChange} />
+                                        Pay at Salon
+                                    </label>
                                 </div>
                             </div>
 

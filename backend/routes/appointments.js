@@ -19,7 +19,7 @@ router.get('/', authMiddleware, adminMiddleware, (req, res) => {
 
 // Create new appointment (Public)
 router.post('/', (req, res) => {
-    const { customerName, phone, email, serviceId, stylistName, date, time } = req.body;
+    const { customerName, phone, email, serviceId, stylistName, date, time, totalAmount, paymentStatus, paymentMethod, paymentId } = req.body;
 
     if (!customerName || !phone || !serviceId || !date || !time) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -32,8 +32,8 @@ router.post('/', (req, res) => {
             return res.status(409).json({ error: 'Time slot is already booked. Please choose another time.' });
         }
 
-        const sql = `INSERT INTO appointments (customerName, phone, email, serviceId, stylistName, date, time) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        const params = [customerName, phone, email, serviceId, stylistName, date, time];
+        const sql = `INSERT INTO appointments (customerName, phone, email, serviceId, stylistName, date, time, totalAmount, paymentStatus, paymentMethod, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const params = [customerName, phone, email, serviceId, stylistName, date, time, totalAmount || 0, paymentStatus || 'Pending', paymentMethod || 'PayAtSalon', paymentId || null];
 
         db.run(sql, params, function (err) {
             if (err) return res.status(500).json({ error: 'Error creating appointment', details: err.message });
