@@ -11,8 +11,8 @@ router.get('/', (req, res) => {
     });
 });
 
-// Add a manual review (Admin only) or from API payload
-router.post('/', authMiddleware, adminMiddleware, (req, res) => {
+// Add a review (Public)
+router.post('/', (req, res) => {
     const { reviewerName, rating, reviewText, reviewDate, profilePhotoUrl } = req.body;
 
     if (!reviewerName || !rating) {
