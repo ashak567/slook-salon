@@ -1,7 +1,7 @@
 .reviews-carousel-section {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 80px 5%;
+    padding: 60px 20px;
 }
 
 .reviews-header {
@@ -12,7 +12,7 @@
 }
 
 .reviews-header h2 {
-    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
     margin: 0;
 }
 
@@ -49,7 +49,7 @@
 .reviews-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 20px;
 }
 
 @media (min-width: 768px) {
