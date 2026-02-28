@@ -50,7 +50,7 @@ const Booking = () => {
         setSuccess('');
 
         try {
-            const selectedService = services.find(s => s.id === Number(formData.serviceId));
+            const selectedService = services.find(s => s.id === formData.serviceId);
             const totalAmount = selectedService ? selectedService.priceMin : 0;
             const payload = { ...formData, totalAmount, paymentStatus: 'Pending' };
 
