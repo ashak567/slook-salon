@@ -65,6 +65,19 @@ const Booking = () => {
                 // Step 2: Pay Now Flow - Create Razorpay Order
                 const orderRes = await api.post('/payments/create-order', { amount: totalAmount, appointmentId });
 
+                if (orderRes.data && orderRes.data.id && orderRes.data.id.startsWith('order_mock_')) {
+                    // INTERCEPT TESTING MODE
+                    await api.post('/payments/verify-payment', {
+                        razorpay_order_id: orderRes.data.id,
+                        razorpay_payment_id: 'pay_mock_' + Date.now(),
+                        razorpay_signature: 'mock_signature',
+                        appointmentId
+                    });
+                    setSuccess('Payment successful & Appointment confirmed (Test Mode)!');
+                    setTimeout(() => navigate('/'), 3000);
+                    return;
+                }
+
                 const options = {
                     key: "rzp_test_dummykey", // In production, fetch this dynamically or use env
                     amount: orderRes.data.amount,

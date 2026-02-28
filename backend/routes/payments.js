@@ -13,6 +13,16 @@ const razorpay = new Razorpay({
 router.post('/create-order', async (req, res) => {
     try {
         const { amount, appointmentId } = req.body; // Amount should be in INR
+
+        if (process.env.RAZORPAY_KEY_ID === 'test_key_id') {
+            return res.json({
+                id: 'order_mock_' + Date.now(),
+                amount: amount * 100,
+                currency: 'INR',
+                receipt: `receipt_appt_${appointmentId}`
+            });
+        }
+
         const options = {
             amount: amount * 100, // amount in smallest currency unit (paise)
             currency: 'INR',
@@ -32,6 +42,17 @@ router.post('/create-order', async (req, res) => {
 // Verify Payment Signature
 router.post('/verify-payment', (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
+
+    if (process.env.RAZORPAY_KEY_ID === 'test_key_id' && razorpay_signature === 'mock_signature') {
+        db.run(`UPDATE appointments SET paymentStatus = 'Paid', paymentId = ? WHERE id = ?`,
+            [razorpay_payment_id, appointmentId],
+            function (err) {
+                if (err) return res.status(500).json({ status: 'failed', error: err.message });
+                return res.json({ status: 'success', message: 'Mock Payment verified successfully' });
+            }
+        );
+        return;
+    }
 
     const payload = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
