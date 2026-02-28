@@ -55,10 +55,18 @@ const Reviews = () => {
     return (
         <div className="reviews-carousel-section">
             <div className="reviews-header">
-                <h2>What Our Clients Say</h2>
-                <div className="reviews-controls">
-                    <button onClick={prevSlide} className="control-btn"><ChevronLeft /></button>
-                    <button onClick={nextSlide} className="control-btn"><ChevronRight /></button>
+                <div>
+                    <h2>What Our Clients Say</h2>
+                    <p style={{ color: 'var(--color-charcoal-light)', marginTop: '5px' }}>
+                        Trusted by over {reviews.length > 0 ? reviews.length : '90'}+ clients in Ballari
+                    </p>
+                </div>
+                <div className="reviews-controls" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <a href="/reviews" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>View All Reviews</a>
+                    <div>
+                        <button onClick={prevSlide} className="control-btn"><ChevronLeft /></button>
+                        <button onClick={nextSlide} className="control-btn"><ChevronRight /></button>
+                    </div>
                 </div>
             </div>
 

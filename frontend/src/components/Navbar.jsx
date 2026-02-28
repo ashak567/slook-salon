@@ -38,7 +38,7 @@ const Navbar = () => {
                 <nav className="desktop-nav">
                     <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
                     <Link to="/services" className={`nav-link ${location.pathname === '/services' ? 'active' : ''}`}>Services</Link>
-                    <a href="/#reviews" className="nav-link">Reviews</a>
+                    <Link to="/reviews" className={`nav-link ${location.pathname === '/reviews' ? 'active' : ''}`}>Reviews</Link>
                 </nav>
 
                 <div className="desktop-actions">
@@ -56,7 +56,7 @@ const Navbar = () => {
                 <nav>
                     <Link to="/" className="mobile-link" onClick={closeMenu}>Home</Link>
                     <Link to="/services" className="mobile-link" onClick={closeMenu}>Services</Link>
-                    <a href="/#reviews" className="mobile-link" onClick={closeMenu}>Reviews</a>
+                    <Link to="/reviews" className="mobile-link" onClick={closeMenu}>Reviews</Link>
                     <Link to="/book" className="btn-primary custom-btn-mobile" onClick={closeMenu}>Book Appointment</Link>
                 </nav>
             </div>
