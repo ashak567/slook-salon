@@ -1,7 +1,15 @@
 import { MapPin, Phone, Clock, Instagram, Facebook } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import './Footer.css';
 
 const Footer = () => {
+    const location = useLocation();
+
+    // Hide Footer on admin routes
+    if (['/admin', '/staff-login', '/dashboard'].some(path => location.pathname.startsWith(path))) {
+        return null;
+    }
+
     return (
         <footer className="footer">
             <div className="footer-container">

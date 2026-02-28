@@ -8,6 +8,11 @@ const Navbar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
 
+    // Hide Navbar on admin routes
+    if (['/admin', '/staff-login', '/dashboard'].some(path => location.pathname.startsWith(path))) {
+        return null;
+    }
+
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
