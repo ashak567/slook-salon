@@ -1,79 +1,103 @@
 const express = require('express');
 const router = express.Router();
+const Appointment = require('../models/Appointment');
+const Service = require('../models/Service');
 const { authMiddleware, adminMiddleware } = require('../middlewares/authMiddleware');
 
 // Get all appointments (Admin only)
-router.get('/', authMiddleware, adminMiddleware, (req, res) => {
-    const sql = `
-    SELECT a.*, s.serviceName, s.priceMin, s.duration 
-    FROM appointments a
-    JOIN services s ON a.serviceId = s.id
-    ORDER BY a.date DESC, a.time DESC
-  `;
-    db.all(sql, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const appointments = await Appointment.find().populate('serviceId').sort({ date: -1, time: -1 });
+
+        // Map to flat object expected by UI
+        const mapped = appointments.map(a => {
+            const obj = a.toObject();
+            obj.id = obj._id;
+            if (obj.serviceId) {
+                obj.serviceName = obj.serviceId.serviceName;
+                obj.duration = obj.serviceId.duration;
+            }
+            return obj;
+        });
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Create new appointment (Public)
-router.post('/', (req, res) => {
-    const { customerName, phone, email, serviceId, stylistName, date, time, totalAmount, paymentStatus, paymentMethod, paymentId } = req.body;
+router.post('/', async (req, res) => {
+    try {
+        const { customerName, phone, email, serviceId, stylistName, date, time, totalAmount, paymentStatus, paymentMethod, paymentId } = req.body;
 
-    if (!customerName || !phone || !serviceId || !date || !time) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
+        if (!customerName || !phone || !serviceId || !date || !time) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-    // Double booking check happens at DB level via UNIQUE index, but we can do a preemptive check
-    db.get('SELECT id FROM appointments WHERE date = ? AND time = ?', [date, time], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Database error', details: err.message });
-        if (row) {
+        const existing = await Appointment.findOne({ date, time });
+        if (existing) {
             return res.status(409).json({ error: 'Time slot is already booked. Please choose another time.' });
         }
 
-        const sql = `INSERT INTO appointments (customerName, phone, email, serviceId, stylistName, date, time, totalAmount, paymentStatus, paymentMethod, paymentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        const params = [customerName, phone, email, serviceId, stylistName, date, time, totalAmount || 0, paymentStatus || 'Pending', paymentMethod || 'PayAtSalon', paymentId || null];
-
-        db.run(sql, params, function (err) {
-            if (err) return res.status(500).json({ error: 'Error creating appointment', details: err.message });
-
-            const newApptId = this.lastID;
-
-            // Real-time Staff Announcement trigger
-            db.get('SELECT serviceName FROM services WHERE id = ?', [serviceId], (serviceErr, serviceRow) => {
-                const serviceName = serviceRow ? serviceRow.serviceName : 'a service';
-                const msg = `New booking received. ${customerName} has booked ${serviceName} on ${date} at ${time} with ${stylistName || 'any stylist'}.`;
-
-                if (req.io) {
-                    req.io.emit('new_booking', { message: msg, appointment: { id: newApptId, customerName, date, time, serviceName, stylistName } });
-                }
-                res.status(201).json({ message: 'Appointment booked successfully', id: newApptId });
-            });
+        const newAppt = await Appointment.create({
+            customerName, phone, email, serviceId, stylistName, date, time,
+            totalAmount: totalAmount || 0,
+            paymentStatus: paymentStatus || 'Pending',
+            paymentMethod: paymentMethod || 'PayAtSalon',
+            paymentId: paymentId || null
         });
-    });
+
+        // Broadcast
+        const service = await Service.findById(serviceId);
+        const serviceName = service ? service.serviceName : 'a service';
+        const msg = `New booking received. ${customerName} has booked ${serviceName} on ${date} at ${time} with ${stylistName || 'any stylist'}.`;
+
+        if (req.io) {
+            req.io.emit('new_booking', { message: msg, appointment: { id: newAppt._id, customerName, date, time, serviceName, stylistName } });
+        }
+
+        res.status(201).json({ message: 'Appointment booked successfully', id: newAppt._id });
+
+    } catch (err) {
+        // Handle Mongoose Duplicate Key Error (11000) gracefully just in case race condition
+        if (err.code === 11000) {
+            return res.status(409).json({ error: 'Time slot is already booked. Please choose another time.' });
+        }
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// -- NO OP --
-
 // Update appointment status or payment
-router.put('/:id', authMiddleware, adminMiddleware, (req, res) => {
-    const { paymentStatus, paymentId } = req.body;
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { paymentStatus, paymentId } = req.body;
 
-    const sql = `UPDATE appointments SET paymentStatus = coalesce(?, paymentStatus), paymentId = coalesce(?, paymentId) WHERE id = ? `;
-    const params = [paymentStatus, paymentId, req.params.id];
+        const updated = await Appointment.findByIdAndUpdate(
+            req.params.id,
+            {
+                ...(paymentStatus && { paymentStatus }),
+                ...(paymentId && { paymentId })
+            },
+            { new: true }
+        );
 
-    db.run(sql, params, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Appointment updated', changes: this.changes });
-    });
+        if (!updated) return res.status(404).json({ error: 'Appointment not found' });
+        res.json({ message: 'Appointment updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Delete appointment
-router.delete('/:id', authMiddleware, adminMiddleware, (req, res) => {
-    db.run('DELETE FROM appointments WHERE id = ?', req.params.id, function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Appointment deleted', changes: this.changes });
-    });
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const deleted = await Appointment.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Appointment not found' });
+        res.json({ message: 'Appointment deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
