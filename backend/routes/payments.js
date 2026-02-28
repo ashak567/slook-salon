@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
-const db = require('../db');
+const Appointment = require('../models/Appointment');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,

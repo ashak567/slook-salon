@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
 const { authMiddleware, adminMiddleware } = require('../middlewares/authMiddleware');
 
 // Get all appointments (Admin only)
