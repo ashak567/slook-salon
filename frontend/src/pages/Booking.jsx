@@ -31,12 +31,23 @@ const Booking = () => {
             try {
                 const res = await api.get('/services');
                 setServices(res.data);
+
+                // Pre-fill category if a service was passed via URL to fix hidden dropdown bug
+                if (initialServiceId) {
+                    const matchedService = res.data.find(s => String(s.id) === String(initialServiceId));
+                    if (matchedService && matchedService.category) {
+                        setFormData(prev => ({
+                            ...prev,
+                            category: matchedService.category
+                        }));
+                    }
+                }
             } catch (err) {
                 console.error('Failed to fetch services:', err);
             }
         };
         fetchServices();
-    }, []);
+    }, [initialServiceId]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
