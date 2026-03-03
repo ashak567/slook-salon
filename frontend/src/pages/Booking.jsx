@@ -65,68 +65,15 @@ const Booking = () => {
         try {
             const selectedService = services.find(s => s.id === dataToSubmit.serviceId);
             const totalAmount = selectedService ? selectedService.priceMin : 0;
-            const payload = { ...dataToSubmit, totalAmount, paymentStatus: 'Pending' };
 
-            // Step 1: Create the appointment first
-            const res = await api.post('/appointments', payload);
-            const appointmentId = res.data.id;
+            // Force PayAtSalon implicitly
+            const payload = { ...dataToSubmit, totalAmount, paymentStatus: 'Pending', paymentMethod: 'PayAtSalon' };
 
-            if (dataToSubmit.paymentMethod === 'PayAtSalon') {
-                setSuccess('Appointment booked successfully! We will see you soon.');
-                setTimeout(() => navigate('/'), 3000);
-            } else {
-                // Step 2: Pay Now Flow - Create Razorpay Order
-                const orderRes = await api.post('/payments/create-order', { amount: totalAmount, appointmentId });
+            await api.post('/appointments', payload);
 
-                if (orderRes.data && orderRes.data.id && orderRes.data.id.startsWith('order_mock_')) {
-                    // INTERCEPT TESTING MODE
-                    await api.post('/payments/verify-payment', {
-                        razorpay_order_id: orderRes.data.id,
-                        razorpay_payment_id: 'pay_mock_' + Date.now(),
-                        razorpay_signature: 'mock_signature',
-                        appointmentId
-                    });
-                    setSuccess('Payment successful & Appointment confirmed (Test Mode)!');
-                    setTimeout(() => navigate('/'), 3000);
-                    return;
-                }
+            setSuccess('Appointment booked successfully! Payment will be collected at the salon.');
+            setTimeout(() => navigate('/'), 3000);
 
-                const options = {
-                    key: "rzp_test_dummykey", // In production, fetch this dynamically or use env
-                    amount: orderRes.data.amount,
-                    currency: "INR",
-                    name: "Slooks Unisex Salon",
-                    description: `Booking for ${selectedService.serviceName}`,
-                    order_id: orderRes.data.id,
-                    handler: async function (response) {
-                        try {
-                            // Step 3: Verify Payment Signature Server-Side
-                            await api.post('/payments/verify-payment', {
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                appointmentId
-                            });
-                            setSuccess('Payment successful & Appointment confirmed!');
-                            setTimeout(() => navigate('/'), 3000);
-                        } catch (err) {
-                            setError('Payment verification failed. Please contact salon.');
-                        }
-                    },
-                    prefill: {
-                        name: dataToSubmit.customerName,
-                        email: dataToSubmit.email,
-                        contact: dataToSubmit.phone
-                    },
-                    theme: { color: "#D4AF37" }
-                };
-
-                const rzp = new window.Razorpay(options);
-                rzp.on('payment.failed', function (response) {
-                    setError('Payment failed: ' + response.error.description);
-                });
-                rzp.open();
-            }
         } catch (err) {
             if (err.response && err.response.data && err.response.data.error) {
                 setError(err.response.data.error);
@@ -281,21 +228,9 @@ const Booking = () => {
                                 </div>
                             </div>
 
-                            <div className="form-group payment-options" style={{ marginTop: '20px', marginBottom: '20px' }}>
-                                <label style={{ color: 'var(--color-charcoal)', fontWeight: 'bold' }}>Payment Method *</label>
-                                <div className="radio-group" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--color-charcoal)' }}>
-                                        <input type="radio" name="paymentMethod" value="Online" checked={formData.paymentMethod === 'Online'} onChange={handleChange} />
-                                        Pay Now (Online)
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--color-charcoal)' }}>
-                                        <input type="radio" name="paymentMethod" value="PayAtSalon" checked={formData.paymentMethod === 'PayAtSalon'} onChange={handleChange} />
-                                        Pay at Salon
-                                    </label>
-                                </div>
-                            </div>
+                            {/* Payment Options Removed. System defaults to Pay At Salon exclusively. */}
 
-                            <button type="submit" className="btn-primary form-submit" disabled={loading}>
+                            <button type="submit" className="btn-primary form-submit" disabled={loading} style={{ marginTop: '30px' }}>
                                 {loading ? 'Booking...' : 'Confirm Appointment'}
                             </button>
                         </form>

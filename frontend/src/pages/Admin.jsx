@@ -18,8 +18,6 @@ const Admin = () => {
 
     // Filters
     const [filterDate, setFilterDate] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [filterMethod, setFilterMethod] = useState('');
 
     const navigate = useNavigate();
 
@@ -108,20 +106,8 @@ const Admin = () => {
         setAudioEnabled(!audioEnabled);
     };
 
-    const togglePaymentStatus = async (id, currentStatus) => {
-        if (currentStatus === 'Paid') return; // Only allow marking as Paid for Pending
-        try {
-            await api.put(`/appointments/${id}`, { paymentStatus: 'Paid' });
-            fetchAppointments();
-        } catch (err) {
-            console.error('Failed to update payment status:', err);
-        }
-    };
-
     const filteredAppointments = appointments.filter(appt => {
         if (filterDate && appt.date !== filterDate) return false;
-        if (filterStatus && appt.paymentStatus !== filterStatus) return false;
-        if (filterMethod && appt.paymentMethod !== filterMethod) return false;
         return true;
     });
 
@@ -202,18 +188,6 @@ const Admin = () => {
                                 <span>Total Bookings Today</span>
                                 <strong>{appointments.filter(a => a.date === todayDate).length}</strong>
                             </div>
-                            <div className="stat-card">
-                                <span>Paid Revenue Today</span>
-                                <strong style={{ color: '#047857' }}>₹{appointments.filter(a => a.date === todayDate && a.paymentStatus === 'Paid').reduce((sum, a) => sum + (a.totalAmount || 0), 0)}</strong>
-                            </div>
-                            <div className="stat-card">
-                                <span>Pending Payments Today</span>
-                                <strong style={{ color: '#b45309' }}>₹{appointments.filter(a => a.date === todayDate && a.paymentStatus === 'Pending').reduce((sum, a) => sum + (a.totalAmount || 0), 0)}</strong>
-                            </div>
-                            <div className="stat-card">
-                                <span>Total Revenue (All Time)</span>
-                                <strong>₹{appointments.filter(a => a.paymentStatus === 'Paid').reduce((sum, a) => sum + (a.totalAmount || 0), 0)}</strong>
-                            </div>
                         </div>
                     )}
                 </div>
@@ -225,23 +199,7 @@ const Admin = () => {
                                 <label>Filter by Date</label>
                                 <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
                             </div>
-                            <div className="form-group" style={{ flex: 1, margin: 0 }}>
-                                <label>Payment Status</label>
-                                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                                    <option value="">All Statuses</option>
-                                    <option value="Paid">Paid</option>
-                                    <option value="Pending">Pending</option>
-                                </select>
-                            </div>
-                            <div className="form-group" style={{ flex: 1, margin: 0 }}>
-                                <label>Payment Method</label>
-                                <select value={filterMethod} onChange={(e) => setFilterMethod(e.target.value)}>
-                                    <option value="">All Methods</option>
-                                    <option value="Online">Online</option>
-                                    <option value="PayAtSalon">Pay at Salon</option>
-                                </select>
-                            </div>
-                            <button className="btn-primary" style={{ marginTop: 'auto', padding: '10px 20px', height: '42px' }} onClick={() => { setFilterDate(''); setFilterMethod(''); setFilterStatus(''); }}>Clear</button>
+                            <button className="btn-primary" style={{ marginTop: 'auto', padding: '10px 20px', height: '42px' }} onClick={() => setFilterDate('')}>Clear</button>
                         </div>
 
                         <div className="data-table-container glass-panel">
@@ -251,8 +209,7 @@ const Admin = () => {
                                         <th>Date & Time</th>
                                         <th>Client Details</th>
                                         <th>Service (Stylist)</th>
-                                        <th>Amount & Method</th>
-                                        <th>Payment Status</th>
+                                        <th>Price</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -285,18 +242,9 @@ const Admin = () => {
                                                 <td>
                                                     <div className="cell-service">
                                                         <strong>₹{appt.totalAmount || 0}</strong>
-                                                        <span>{appt.paymentMethod === 'Online' ? 'Online Setup' : 'At Salon'}</span>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span className={`status-badge ${appt.paymentStatus === 'Paid' ? 'paid' : 'pending'}`}>
-                                                        {appt.paymentStatus === 'Paid' ? <><CheckCircle size={14} /> Paid</> : 'Pending'}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {appt.paymentStatus === 'Pending' && (
-                                                        <button className="action-btn" style={{ color: '#047857', borderColor: '#34d399', marginRight: '5px' }} onClick={() => togglePaymentStatus(appt.id, appt.paymentStatus)}>Mark as Paid</button>
-                                                    )}
                                                     <button className="action-btn delete" onClick={() => deleteAppointment(appt.id)}>Cancel</button>
                                                 </td>
                                             </tr>

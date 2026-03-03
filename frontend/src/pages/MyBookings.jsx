@@ -101,9 +101,6 @@ const MyBookings = () => {
                                     <div key={appt.id} className="booking-card glass-panel hover-3d">
                                         <div className="card-header">
                                             <h4>{appt.serviceName}</h4>
-                                            <span className={`status-badge ${appt.paymentStatus === 'Paid' ? 'paid' : 'pending'}`}>
-                                                {appt.paymentStatus}
-                                            </span>
                                         </div>
                                         <div className="card-body">
                                             <p><Calendar size={16} /> <strong>{appt.date}</strong></p>
