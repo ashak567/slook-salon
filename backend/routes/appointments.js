@@ -35,10 +35,52 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const existing = await Appointment.findOne({ date, time });
-        if (existing) {
-            return res.status(409).json({ error: 'Time slot is already booked. Please choose another time.' });
+        // --- NEW ALGORITHM: Stylist Double-Booking Prevention & Suggestions ---
+        // If a specific stylist is requested, check if THEY are booked.
+        // If "Any Stylist" (empty string or not provided), we bypass strict unique checks.
+        if (stylistName && stylistName !== 'Any Stylist') {
+            const existingStylist = await Appointment.findOne({ date, time, stylistName });
+
+            if (existingStylist) {
+                // Collision detected! Calculate alternative suggestions.
+                const timeSlots = [];
+                for (let i = 10; i <= 20; i++) {
+                    timeSlots.push(`${i > 12 ? i - 12 : i}:00 ${i >= 12 ? 'PM' : 'AM'}`);
+                    if (i !== 20) timeSlots.push(`${i > 12 ? i - 12 : i}:30 ${i >= 12 ? 'PM' : 'AM'}`);
+                }
+
+                const todayAppointments = await Appointment.find({ date, stylistName });
+                const bookedTimesToday = todayAppointments.map(a => a.time);
+
+                const startIndex = timeSlots.indexOf(time);
+                let nextAvailableToday = null;
+                if (startIndex !== -1) {
+                    for (let i = startIndex + 1; i < timeSlots.length; i++) {
+                        if (!bookedTimesToday.includes(timeSlots[i])) {
+                            nextAvailableToday = timeSlots[i];
+                            break;
+                        }
+                    }
+                }
+
+                const dateObj = new Date(date);
+                dateObj.setDate(dateObj.getDate() + 1);
+                const tomorrowStr = dateObj.toISOString().split('T')[0];
+                const tomorrowConflict = await Appointment.findOne({ date: tomorrowStr, time, stylistName });
+                const availableTomorrow = !tomorrowConflict ? tomorrowStr : null;
+
+                return res.status(409).json({
+                    error: `${stylistName} is already booked at ${time}.`,
+                    conflict: true,
+                    suggestions: {
+                        todayTime: nextAvailableToday,
+                        tomorrowDate: availableTomorrow,
+                        tomorrowTime: time
+                    }
+                });
+            }
         }
+        // --- END ALGORITHM ---
 
         const newAppt = await Appointment.create({
             customerName, phone, email, serviceId, stylistName, date, time,

@@ -50,7 +50,7 @@ const appointmentSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Create a compound unique index to prevent double bookings purely at the database level
-appointmentSchema.index({ date: 1, time: 1 }, { unique: true });
+// Index removed: We now allow concurrent bookings if the stylist differs.
+// appointmentSchema.index({ date: 1, time: 1 }, { unique: true });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

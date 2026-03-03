@@ -25,6 +25,7 @@ const Booking = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [suggestions, setSuggestions] = useState(null);
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -52,24 +53,25 @@ const Booking = () => {
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         setError('');
+        setSuggestions(null);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const executeBooking = async (dataToSubmit) => {
         setLoading(true);
         setError('');
         setSuccess('');
+        setSuggestions(null);
 
         try {
-            const selectedService = services.find(s => s.id === formData.serviceId);
+            const selectedService = services.find(s => s.id === dataToSubmit.serviceId);
             const totalAmount = selectedService ? selectedService.priceMin : 0;
-            const payload = { ...formData, totalAmount, paymentStatus: 'Pending' };
+            const payload = { ...dataToSubmit, totalAmount, paymentStatus: 'Pending' };
 
             // Step 1: Create the appointment first
             const res = await api.post('/appointments', payload);
             const appointmentId = res.data.id;
 
-            if (formData.paymentMethod === 'PayAtSalon') {
+            if (dataToSubmit.paymentMethod === 'PayAtSalon') {
                 setSuccess('Appointment booked successfully! We will see you soon.');
                 setTimeout(() => navigate('/'), 3000);
             } else {
@@ -112,9 +114,9 @@ const Booking = () => {
                         }
                     },
                     prefill: {
-                        name: formData.customerName,
-                        email: formData.email,
-                        contact: formData.phone
+                        name: dataToSubmit.customerName,
+                        email: dataToSubmit.email,
+                        contact: dataToSubmit.phone
                     },
                     theme: { color: "#D4AF37" }
                 };
@@ -128,12 +130,26 @@ const Booking = () => {
         } catch (err) {
             if (err.response && err.response.data && err.response.data.error) {
                 setError(err.response.data.error);
+                if (err.response.status === 409 && err.response.data.conflict) {
+                    setSuggestions(err.response.data.suggestions);
+                }
             } else {
                 setError('Failed to book appointment. Please try again.');
             }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        executeBooking(formData);
+    };
+
+    const handleAlternativeBooking = (newDate, newTime) => {
+        const updatedForm = { ...formData, date: newDate, time: newTime };
+        setFormData(updatedForm); // Update UI visibly to user
+        executeBooking(updatedForm); // Transparently auto-submit the new payload
     };
 
     const today = new Date().toISOString().split('T')[0];
@@ -167,7 +183,29 @@ const Booking = () => {
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="booking-form">
-                            {error && <div className="error-message">{error}</div>}
+                            {error && !suggestions && <div className="error-message">{error}</div>}
+
+                            {suggestions && (
+                                <div className="suggestions-box" style={{ background: '#fef3c7', border: '1px solid #f59e0b', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+                                    <h4 style={{ color: '#92400e', marginBottom: '10px' }}>⚠ Stylist Unavailable</h4>
+                                    <p style={{ color: '#b45309', marginBottom: '15px', fontSize: '0.95rem' }}>{error} Here are alternative slots:</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {suggestions.todayTime && (
+                                            <button type="button" className="btn-secondary" style={{ borderColor: '#f59e0b', color: '#92400e' }} onClick={() => handleAlternativeBooking(formData.date, suggestions.todayTime)}>
+                                                Book Today at {suggestions.todayTime}
+                                            </button>
+                                        )}
+                                        {suggestions.tomorrowDate && (
+                                            <button type="button" className="btn-secondary" style={{ borderColor: '#f59e0b', color: '#92400e' }} onClick={() => handleAlternativeBooking(suggestions.tomorrowDate, suggestions.tomorrowTime)}>
+                                                Book Tomorrow at {suggestions.tomorrowTime}
+                                            </button>
+                                        )}
+                                        <button type="button" style={{ background: 'none', border: 'none', color: '#d97706', textDecoration: 'underline', cursor: 'pointer', padding: '10px' }} onClick={() => { setSuggestions(null); setError(''); }}>
+                                            No thanks, let me pick manually
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label>Full Name *</label>
