@@ -7,6 +7,8 @@ import Booking from './pages/Booking';
 import Admin from './pages/Admin';
 import ReviewsPage from './pages/ReviewsPage';
 import MyBookings from './pages/MyBookings';
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <SpeedInsights />
+        <Analytics />
       </div>
     </Router>
   );
