@@ -314,3 +314,56 @@
     color: var(--color-charcoal-light);
     font-size: 1.1rem;
 }
+
+/* Mobile Responsiveness Override */
+@media (max-width: 900px) {
+    .admin-dashboard {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px 20px;
+        gap: 10px;
+    }
+
+    .nav-btn {
+        margin-bottom: 0;
+        white-space: nowrap;
+        flex: 1;
+        text-align: center;
+    }
+
+    .admin-main {
+        overflow-y: visible;
+        padding: 20px;
+    }
+
+    .dashboard-stats {
+        flex-direction: column;
+    }
+
+    .admin-topbar {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .filters-container {
+        flex-direction: column;
+    }
+
+    .data-table-container {
+        overflow-x: auto;
+    }
+}

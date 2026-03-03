@@ -47,8 +47,8 @@
 .hero-subtitle {
     display: block;
     font-family: var(--font-secondary);
-    font-size: 1.2rem;
-    letter-spacing: 5px;
+    font-size: clamp(0.75rem, 3vw, 1.2rem);
+    letter-spacing: clamp(1px, 2vw, 5px);
     text-transform: uppercase;
     color: var(--color-gold);
     margin-bottom: 20px;
