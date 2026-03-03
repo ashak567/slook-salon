@@ -131,12 +131,56 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
 });
 
-// Delete appointment
+// Delete appointment (Admin)
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const deleted = await Appointment.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: 'Appointment not found' });
         res.json({ message: 'Appointment deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Client tracking lookup
+router.post('/lookup', async (req, res) => {
+    try {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Phone number is required' });
+
+        const appointments = await Appointment.find({ phone }).populate('serviceId').sort({ date: -1, time: -1 });
+
+        const mapped = appointments.map(a => {
+            const obj = a.toObject();
+            obj.id = obj._id;
+            if (obj.serviceId) {
+                obj.serviceName = obj.serviceId.serviceName;
+                obj.duration = obj.serviceId.duration;
+            }
+            return obj;
+        });
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Client tracking public cancel
+router.post('/client-cancel/:id', async (req, res) => {
+    try {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Phone number is required to cancel' });
+
+        const appointment = await Appointment.findById(req.params.id);
+        if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+
+        if (appointment.phone !== phone) {
+            return res.status(403).json({ error: 'Phone number does not match booking records' });
+        }
+
+        await Appointment.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Appointment successfully cancelled' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

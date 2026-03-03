@@ -39,6 +39,7 @@ const Navbar = () => {
                     <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
                     <Link to="/services" className={`nav-link ${location.pathname === '/services' ? 'active' : ''}`}>Services</Link>
                     <Link to="/reviews" className={`nav-link ${location.pathname === '/reviews' ? 'active' : ''}`}>Reviews</Link>
+                    <Link to="/my-bookings" className={`nav-link ${location.pathname === '/my-bookings' ? 'active' : ''}`}>My Bookings</Link>
                 </nav>
 
                 <div className="desktop-actions">
@@ -57,6 +58,7 @@ const Navbar = () => {
                     <Link to="/" className="mobile-link" onClick={closeMenu}>Home</Link>
                     <Link to="/services" className="mobile-link" onClick={closeMenu}>Services</Link>
                     <Link to="/reviews" className="mobile-link" onClick={closeMenu}>Reviews</Link>
+                    <Link to="/my-bookings" className="mobile-link" onClick={closeMenu}>My Bookings</Link>
                     <Link to="/book" className="btn-primary custom-btn-mobile" onClick={closeMenu}>Book Appointment</Link>
                 </nav>
             </div>
