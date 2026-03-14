@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Sparkles, Star, Award, Heart } from 'lucide-react';
 import Reviews from '../components/Reviews';

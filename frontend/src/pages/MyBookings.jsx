@@ -18,7 +18,7 @@ const MyBookings = () => {
             const res = await api.post('/appointments/lookup', { phone });
             setAppointments(res.data);
             setIsLoggedIn(true);
-        } catch (err) {
+        } catch {
             setError('Failed to fetch appointments. Please check your phone number.');
         } finally {
             setLoading(false);

@@ -9,7 +9,6 @@ const Admin = () => {
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
     const [appointments, setAppointments] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [audioEnabled, setAudioEnabled] = useState(false);
 
     // Admin Tabs & Data
@@ -37,7 +36,7 @@ const Admin = () => {
             localStorage.setItem('user', JSON.stringify(user));
             setToken(token);
             setUser(user);
-        } catch (err) {
+        } catch {
             setError('Invalid username or password');
         }
     };
@@ -70,6 +69,7 @@ const Admin = () => {
 
     useEffect(() => {
         if (token && user?.role === 'admin') {
+            // eslint-disable-next-line
             fetchAppointments();
             fetchServices();
 
